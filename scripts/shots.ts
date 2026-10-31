@@ -11,6 +11,13 @@ async function main() {
     await page.waitForTimeout(1500);
     await page.screenshot({ path: `test-results/landing-${name}.png`, fullPage: name === "mobile" });
     if (name === "desktop") {
+      await page.getByRole("button", { name: "Blue and red" }).click();
+      await page.waitForTimeout(900);
+      await page.screenshot({ path: "test-results/landing-blue.png" });
+      await page.getByRole("button", { name: "Red on white" }).click();
+      await page.waitForTimeout(900);
+      await page.screenshot({ path: "test-results/landing-red.png" });
+      await page.getByRole("button", { name: "Black and white" }).click();
       await page.mouse.wheel(0, 900);
       await page.waitForTimeout(1200);
       await page.screenshot({ path: `test-results/landing-${name}-2.png` });

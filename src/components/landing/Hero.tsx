@@ -3,20 +3,29 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, Menu, Search } from "lucide-react";
 import Link from "next/link";
+import { useState, type CSSProperties } from "react";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
-function Line({ children, delay }: { children: React.ReactNode; delay: number }) {
+const TONES = {
+  bw: { label: "Black and white", bg: "#ffffff", fg: "#000000", head: "#000000", dot: "#000000" },
+  red: { label: "Red on white", bg: "#ffffff", fg: "#000000", head: "#e5231b", dot: "#e5231b" },
+  blue: { label: "Blue and red", bg: "#1d2bff", fg: "#ffffff", head: "#ff3b2f", dot: "#1d2bff" },
+} as const;
+type Tone = keyof typeof TONES;
+
+/** One word, letters spread edge to edge so every line fills the poster width. */
+function Word({ text, delay }: { text: string; delay: number }) {
   const reduce = useReducedMotion();
   return (
     <span className="block overflow-hidden pb-[0.04em]">
       <motion.span
-        className="flex flex-wrap justify-center gap-x-[0.28em] sm:flex-nowrap sm:justify-between"
+        className="flex justify-between"
         initial={reduce ? false : { y: "105%" }}
         animate={{ y: 0 }}
         transition={{ duration: 1, delay, ease }}
       >
-        {children}
+        {text.split("").map((c, i) => <span key={i}>{c}</span>)}
       </motion.span>
     </span>
   );
@@ -24,23 +33,39 @@ function Line({ children, delay }: { children: React.ReactNode; delay: number })
 
 export function Hero() {
   const reduce = useReducedMotion();
+  const [tone, setTone] = useState<Tone>("bw");
+  const t = TONES[tone];
   const fade = (delay: number) => ({
     initial: reduce ? false : { opacity: 0 },
     animate: { opacity: 1 },
     transition: { duration: 0.9, delay },
   });
+  const vars = { "--hero-bg": t.bg, "--hero-fg": t.fg, background: t.bg, color: t.fg } as CSSProperties;
+
   return (
-    <section className="relative isolate flex min-h-[100svh] flex-col overflow-hidden bg-white text-black">
+    <section style={vars} className="relative isolate flex min-h-[100svh] flex-col overflow-hidden transition-colors duration-500">
       {/* nav */}
       <nav aria-label="Primary" className="relative z-30 grid grid-cols-[auto_1fr_auto] items-center gap-6 px-5 py-5 sm:px-10">
         <button aria-label="Menu" className="grid h-10 w-10 place-items-center"><Menu size={18} aria-hidden /></button>
         <ul className="micro hidden justify-center gap-10 sm:flex">
-          <li><a href="#pieces" className="hover:underline underline-offset-4">Pieces</a></li>
-          <li><a href="#how" className="hover:underline underline-offset-4">Try-on</a></li>
-          <li><a href="#honest" className="hover:underline underline-offset-4">About</a></li>
-          <li><Link href="/privacy" className="hover:underline underline-offset-4">Privacy</Link></li>
+          <li><a href="#pieces" className="underline-offset-4 hover:underline">Pieces</a></li>
+          <li><a href="#how" className="underline-offset-4 hover:underline">Try-on</a></li>
+          <li><a href="#honest" className="underline-offset-4 hover:underline">About</a></li>
+          <li><Link href="/privacy" className="underline-offset-4 hover:underline">Privacy</Link></li>
         </ul>
         <div className="col-start-3 flex items-center gap-4 sm:col-auto">
+          <div role="group" aria-label="Colour" className="hidden items-center gap-2 sm:flex">
+            {(Object.keys(TONES) as Tone[]).map((k) => (
+              <button
+                key={k}
+                aria-label={TONES[k].label}
+                aria-pressed={tone === k}
+                onClick={() => setTone(k)}
+                className="h-4 w-4 rounded-full border"
+                style={{ background: TONES[k].dot, borderColor: t.fg, outline: tone === k ? `2px solid ${t.fg}` : "none", outlineOffset: 2 }}
+              />
+            ))}
+          </div>
           <Search size={15} aria-hidden className="hidden sm:block" />
           <Link href="/studio" className="pill">Get started <ArrowRight size={13} aria-hidden /></Link>
         </div>
@@ -48,14 +73,18 @@ export function Hero() {
 
       {/* poster */}
       <div className="relative flex-1">
-        <h1 aria-label="Looks right. But should I buy it?" className="poster pointer-events-none absolute inset-x-0 top-[6%] z-0 whitespace-normal px-[3vw] text-[clamp(3rem,16vw,8rem)] sm:top-[30%] sm:whitespace-nowrap sm:text-[6.3vw]">
-          <Line delay={0.1}><span>Looks</span><span>Right.</span></Line>
-          <Line delay={0.22}><span>Should</span><span>I buy?</span></Line>
+        <h1
+          aria-label="Looks right. But should I buy it?"
+          style={{ color: t.head }}
+          className="poster pointer-events-none absolute inset-x-0 top-[5%] z-0 px-[3vw] text-[clamp(3rem,19vw,9rem)] transition-colors duration-500 sm:top-[22%] sm:text-[18.6vw]"
+        >
+          <Word text="LOOKS" delay={0.1} />
+          <Word text="RIGHT" delay={0.22} />
         </h1>
 
-        {/* portrait: greyscale photo multiplied onto white so its sky disappears */}
+        {/* cut-out portrait sits in front of the type */}
         <motion.div
-          className="pointer-events-none absolute bottom-0 left-1/2 z-10 aspect-[2/3] h-[74%] sm:-bottom-[8%] sm:h-[132%] -translate-x-1/2"
+          className="pointer-events-none absolute bottom-0 left-1/2 z-10 aspect-[2/3] h-[74%] -translate-x-1/2 sm:-bottom-[8%] sm:h-[132%]"
           initial={reduce ? false : { y: 60, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 1.1, delay: 0.3, ease }}
@@ -74,28 +103,20 @@ export function Hero() {
           />
         </motion.div>
 
-        {/* second layer of type, inverted where it crosses the photo */}
-        <p
-          aria-hidden="true"
-          className="poster pointer-events-none absolute left-[52.5%] top-[59%] z-20 hidden whitespace-nowrap text-[clamp(1rem,2.5vw,2.8rem)] text-white mix-blend-difference [writing-mode:vertical-rl] sm:block"
-        >
-          SmallPrint
-        </p>
-
         {/* captions */}
-        <motion.p {...fade(0.9)} className="micro text-white mix-blend-difference absolute hidden sm:block left-5 top-[48%] z-20 sm:left-10 sm:top-[17%]">
+        <motion.p {...fade(0.9)} className="micro absolute left-5 top-[48%] z-20 hidden sm:left-10 sm:top-[11%] sm:block">
           AI try-on<br />meets the<br />small print
         </motion.p>
-        <motion.p {...fade(1)} className="micro text-white mix-blend-difference absolute hidden sm:block right-5 top-[48%] z-20 text-right sm:right-10 sm:top-[17%]">
+        <motion.p {...fade(1)} className="micro absolute right-5 top-[48%] z-20 hidden text-right sm:right-10 sm:top-[11%] sm:block">
           Try<br />Compare<br />Decide
         </motion.p>
         <motion.div {...fade(1.1)} className="absolute bottom-6 left-5 z-20 sm:bottom-10 sm:left-10">
-          <p className="micro mb-5 hidden text-white mix-blend-difference sm:block">
-            Drop length<br />Weight<br />Returns<br />Without guessing
+          <p className="micro mb-5 hidden sm:block">
+            But should<br />I buy it?
           </p>
           <Link href="/studio" className="pill pill-solid">Try my first earring <ArrowRight size={13} aria-hidden /></Link>
         </motion.div>
-        <motion.p {...fade(1.2)} className="micro text-white mix-blend-difference absolute hidden sm:block bottom-6 right-5 z-20 text-right sm:bottom-10 sm:right-10">
+        <motion.p {...fade(1.2)} className="micro absolute bottom-6 right-5 z-20 hidden text-right sm:bottom-10 sm:right-10 sm:block">
           A more<br />confident<br />checkout
         </motion.p>
       </div>

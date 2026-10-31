@@ -231,22 +231,23 @@ body::before {
   line-height: 1.9;
   font-weight: 500;
 }
+.mono { --hero-bg: #fff; --hero-fg: #000; }
 .pill {
   display: inline-flex;
   align-items: center;
   gap: 0.6rem;
   min-height: 44px;
   padding: 0 1.4rem;
-  border: 1px solid #000;
+  border: 1px solid var(--hero-fg);
   border-radius: 999px;
   font-size: 0.625rem;
   letter-spacing: 0.22em;
   text-transform: uppercase;
   font-weight: 600;
   background: transparent;
-  color: #000;
+  color: var(--hero-fg);
   transition: background 0.2s, color 0.2s;
 }
-.pill:hover { background: #000; color: #fff; }
-.pill-solid { background: #000; color: #fff; }
-.pill-solid:hover { background: #fff; color: #000; }
+.pill:hover { background: var(--hero-fg); color: var(--hero-bg); }
+.pill-solid { background: var(--hero-fg); color: var(--hero-bg); }
+.pill-solid:hover { background: var(--hero-bg); color: var(--hero-fg); }
