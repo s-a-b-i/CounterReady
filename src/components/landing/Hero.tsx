@@ -63,7 +63,7 @@ export function Hero() {
         <h1
           aria-label="Choose from what the shop actually sells"
           style={{ color: t.head }}
-          className="poster pointer-events-none absolute inset-x-0 top-[6%] z-0 px-[3vw] text-[clamp(2.6rem,16vw,8rem)] transition-colors duration-500 sm:top-[20%] sm:text-[15.6vw]"
+          className="poster pointer-events-none absolute inset-x-0 top-[6%] z-0 px-[3vw] text-[clamp(2.6rem,16vw,8rem)] transition-colors duration-500 sm:top-[19%] sm:text-[17.4vw]"
         >
           <Word text="CHOOSE" delay={0.1} />
           <Word text="WISELY" delay={0.22} />
@@ -82,6 +82,10 @@ export function Hero() {
             alt="Side-profile portrait of a woman with a small gold hoop earring (AI-generated image)"
             className="h-full w-full object-contain object-bottom"
             style={{
+              WebkitMaskRepeat: "no-repeat",
+              maskRepeat: "no-repeat",
+              WebkitMaskSize: "100% 100%",
+              maskSize: "100% 100%",
               WebkitMaskImage: "linear-gradient(to right, #000 0, #000 86%, transparent 97%), linear-gradient(to bottom, #000 80%, transparent 100%)",
               maskImage: "linear-gradient(to right, #000 0, #000 86%, transparent 97%), linear-gradient(to bottom, #000 80%, transparent 100%)",
               WebkitMaskComposite: "source-in",
