@@ -51,8 +51,18 @@ async function call(path: string, init: RequestInit, attempts = 3): Promise<unkn
   throw last ?? new YoucamError("YouCam request failed", 500);
 }
 
+const MOCK_DELAY_MS = 5000;
+
+/** Mock mode: a task id encodes its start time; the "result" is the bundled pre-generated example. */
+function mockTask(taskId: string): ParsedTask {
+  const started = Number(taskId.replace("mock-", ""));
+  if (Date.now() - started < MOCK_DELAY_MS) return { status: "processing" };
+  return { status: "success", resultUrl: "mock://pre-generated" };
+}
+
 /** Uploads bytes via YouCam's signed-URL flow and returns the provider file id. */
 export async function uploadImage(bytes: Buffer, contentType: string, fileName: string): Promise<string> {
+  if (env().YOUCAM_MOCK === "1") return `mock-file-${fileName}`;
   const init = uploadInit.parse(
     await call("/s2s/v2.0/file", {
       method: "POST",
@@ -78,6 +88,7 @@ export interface EarringTaskInput {
 }
 
 export async function createEarringTask(input: EarringTaskInput): Promise<string> {
+  if (env().YOUCAM_MOCK === "1") return `mock-${Date.now()}`;
   const body = {
     src_file_id: input.srcFileId,
     ref_file_ids: [input.refFileId],
@@ -94,6 +105,7 @@ export async function createEarringTask(input: EarringTaskInput): Promise<string
 }
 
 export async function getEarringTask(taskId: string): Promise<{ parsed: ParsedTask; raw: unknown }> {
+  if (taskId.startsWith("mock-")) return { parsed: mockTask(taskId), raw: null };
   const raw = await call(`/s2s/v2.0/task/2d-vto/earring/${encodeURIComponent(taskId)}`, { method: "GET" });
   return { parsed: parseTaskResponse(raw), raw };
 }
