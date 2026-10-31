@@ -52,7 +52,12 @@ async function main() {
     await fetch(`${base}/s2s/v2.0/task/2d-vto/earring`, {
       method: "POST",
       headers,
-      body: JSON.stringify({ src_file_id: src, ref_file_ids: [ref], earring_scale: Number(scaleArg ?? 3), earring_is_right_ear: true }),
+      body: JSON.stringify({
+        src_file_id: src,
+        ref_file_ids: [ref],
+        source_info: { name: src },
+        object_infos: [{ name: ref, parameter: { earring_scale: Number(scaleArg ?? 3), earring_is_right_ear: true } }],
+      }),
     }),
   );
   const id = created.data!.task_id!;

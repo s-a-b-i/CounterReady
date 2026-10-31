@@ -81,8 +81,10 @@ export async function createEarringTask(input: EarringTaskInput): Promise<string
   const body = {
     src_file_id: input.srcFileId,
     ref_file_ids: [input.refFileId],
-    earring_scale: input.earringScaleCm,
-    earring_is_right_ear: input.isRightEar ?? true,
+    source_info: { name: input.srcFileId },
+    object_infos: [
+      { name: input.refFileId, parameter: { earring_scale: input.earringScaleCm, earring_is_right_ear: input.isRightEar ?? true } },
+    ],
   };
   // Task creation is not idempotent: attempts=1 so a failure can never double-charge.
   const out = taskCreated.parse(
