@@ -41,7 +41,8 @@ async function call(path: string, init: RequestInit, attempts = 3): Promise<unkn
       body = { raw: text.slice(0, 200) };
     }
     if (res.ok) return body;
-    const maybeCode = (body as { error?: unknown })?.error;
+    const b = body as { error?: unknown; error_code?: unknown };
+    const maybeCode = b?.error_code ?? b?.error;
     const code = typeof maybeCode === "string" ? maybeCode : undefined;
     const transient = res.status === 429 || res.status >= 500;
     last = new YoucamError(`YouCam ${res.status} on ${path}`, res.status, code, transient);
@@ -80,32 +81,20 @@ export async function uploadImage(bytes: Buffer, contentType: string, fileName: 
   return file.file_id;
 }
 
-export interface EarringTaskInput {
-  srcFileId: string;
-  refFileId: string;
-  earringScaleCm: number;
-  isRightEar?: boolean;
-}
+/** One makeup effect object, shaped per the AI Makeup VTO docs (see effects.ts). */
+export type MakeupEffect = { category: string } & Record<string, unknown>;
 
-export async function createEarringTask(input: EarringTaskInput): Promise<string> {
+/** AI Makeup VTO: `effects` carries one effect entry; `src_file_id` is the uploaded selfie. */
+export async function createMakeupTask(srcFileId: string, effect: MakeupEffect): Promise<string> {
   if (env().YOUCAM_MOCK === "1") return `mock-${Date.now()}`;
-  const body = {
-    src_file_id: input.srcFileId,
-    ref_file_ids: [input.refFileId],
-    source_info: { name: input.srcFileId },
-    object_infos: [
-      { name: input.refFileId, parameter: { earring_scale: input.earringScaleCm, earring_is_right_ear: input.isRightEar ?? true } },
-    ],
-  };
+  const body = { src_file_id: srcFileId, version: "1.0", effects: [effect] };
   // Task creation is not idempotent: attempts=1 so a failure can never double-charge.
-  const out = taskCreated.parse(
-    await call("/s2s/v2.0/task/2d-vto/earring", { method: "POST", body: JSON.stringify(body) }, 1),
-  );
+  const out = taskCreated.parse(await call("/s2s/v2.0/task/makeup-vto", { method: "POST", body: JSON.stringify(body) }, 1));
   return out.data.task_id;
 }
 
-export async function getEarringTask(taskId: string): Promise<{ parsed: ParsedTask; raw: unknown }> {
+export async function getMakeupTask(taskId: string): Promise<{ parsed: ParsedTask; raw: unknown }> {
   if (taskId.startsWith("mock-")) return { parsed: mockTask(taskId), raw: null };
-  const raw = await call(`/s2s/v2.0/task/2d-vto/earring/${encodeURIComponent(taskId)}`, { method: "GET" });
+  const raw = await call(`/s2s/v2.0/task/makeup-vto/${encodeURIComponent(taskId)}`, { method: "GET" });
   return { parsed: parseTaskResponse(raw), raw };
 }

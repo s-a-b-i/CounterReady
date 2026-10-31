@@ -6,7 +6,7 @@ const schema = z.object({
   YOUCAM_BASE_URL: z.string().url().default("https://yce-api-01.makeupar.com"),
   YOUCAM_MOCK: z.enum(["0", "1"]).default("0"),
   MAX_UNITS_TOTAL: z.coerce.number().int().positive().default(850),
-  MAX_TRYONS_PER_SESSION: z.coerce.number().int().positive().default(6),
+  MAX_PREVIEWS_PER_SESSION: z.coerce.number().int().positive().default(8),
   ADMIN_TOKEN: z.string().optional(),
 });
 

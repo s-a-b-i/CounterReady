@@ -51,17 +51,3 @@ export function parseTaskResponse(raw: unknown): ParsedTask {
   return { status: "processing" };
 }
 
-const MESSAGES: Record<string, string> = {
-  PHOTO_DETECTION_FAIL: "We couldn't find an ear in your photo. Try a side-profile shot with your ear visible and hair tucked back.",
-  PHOTO_CHECK_INVALID: "The pose or size of your photo doesn't work for try-on. Use a side profile, well lit, with the ear unobstructed.",
-  OBJECT_DETECTION_FAIL: "We couldn't read the earring image. It needs to be a clear front view of a single earring.",
-  INPUT_ERROR: "That image format isn't supported. Use a JPG or PNG under 10 MB.",
-  INPUT_MAIN_IMAGE_EMPTY: "A photo is required to try on an earring.",
-  RUNTIME_ERROR: "The try-on service hit an unexpected problem. Please try again.",
-  RATE_LIMIT: "The try-on service is busy right now. Wait a few seconds and try again.",
-  NO_RESULT: "The try-on finished but returned no image. Please try again.",
-};
-
-export function humanError(code?: string): string {
-  return (code && MESSAGES[code]) || "Something went wrong generating this preview. Please try again.";
-}

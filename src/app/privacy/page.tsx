@@ -7,13 +7,14 @@ export default function Privacy() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-16 sm:px-8">
       <p className="eyebrow">Privacy</p>
-      <h1 className="display h-xl mt-3">What we do with your photo.</h1>
+      <h1 className="display h-xl mt-3">What happens to your photo.</h1>
       <div className="mt-8 space-y-6 text-soft">
-        <p><strong className="text-ink">Your selfie is never stored.</strong> It is sent from your browser to our server, passed straight to YouCam&apos;s Earring VTO API to generate the preview, and discarded. It is not written to a database, a file, or our logs.</p>
-        <p><strong className="text-ink">What we do keep.</strong> The generated preview image (compressed), your brief and verdicts, and an anonymous session id in an httpOnly cookie, so your comparison survives a reload. No name, email or account.</p>
-        <p><strong className="text-ink">Shared cards.</strong> A share link shows only your verdicts and the catalogue facts. Your try-on photos are included only if you tick &ldquo;Include my try-on photos&rdquo;.</p>
-        <p><strong className="text-ink">YouCam.</strong> YouCam processes the photo under its own terms. Generated results are stored there for a short time.</p>
-        <p><strong className="text-ink">Not medical advice.</strong> Material and hypoallergenic notes are the seller&apos;s declarations. SmallPrint never claims an earring is allergy-safe.</p>
+        <p><strong className="text-ink">It is sent to Perfect Corp (YouCam) with your consent.</strong> When you press Generate, your photo goes from your browser to our server and on to YouCam&apos;s AI Makeup API, which creates the makeup previews. Nothing is sent before you tick the consent box.</p>
+        <p><strong className="text-ink">What CounterReady keeps.</strong> We never write your photo to our database, disk or logs. We keep a reference to the uploaded file, a hash of it, the generated preview images (compressed) and an anonymous session id in a cookie, so each shade is applied to the same photo and your results survive a reload. No name, email or account.</p>
+        <p><strong className="text-ink">What we can&apos;t promise.</strong> YouCam stores and deletes uploaded files under its own terms and retention rules, which we haven&apos;t independently verified. We therefore don&apos;t promise that your photo disappears from their systems immediately.</p>
+        <p><strong className="text-ink">Your browser.</strong> While you work, your photo and choices sit in this browser tab&apos;s session storage so a reload doesn&apos;t lose them. Closing the tab or deleting your data clears them.</p>
+        <p><strong className="text-ink">Purchase card.</strong> Your face appears on the exported card only if you switch that on. The default card shows the product alone.</p>
+        <p><strong className="text-ink">Colour accuracy.</strong> Previews are approximate renderings, not calibrated matches to the physical product.</p>
       </div>
       <DeleteData />
     </div>

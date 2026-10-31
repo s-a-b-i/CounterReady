@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 180" role="img" aria-label="CounterReady">
+  <title>CounterReady</title>
+  <defs><clipPath id="cr-clip"><rect x="0" y="0" width="300" height="144"/></clipPath></defs>
+  <g clip-path="url(#cr-clip)">
+    <!-- C -->
+    <path d="M136.8 53.1A48 48 0 1 0 136.8 114.9" fill="none" stroke="#0b0c0e" stroke-width="24"/>
+    <!-- R -->
+    <rect x="190" y="24" width="24" height="120" fill="#0b0c0e"/>
+    <path d="M202 36H232a24 24 0 0 1 0 48H202" fill="none" stroke="#0b0c0e" stroke-width="24"/>
+    <path d="M224 84L262 150" fill="none" stroke="#0b0c0e" stroke-width="24"/>
+  </g>
+  <!-- three swatches standing in the C -->
+  <rect x="72" y="82" width="14" height="38" rx="4" fill="#ffb3c1"/>
+  <rect x="93" y="68" width="14" height="52" rx="4" fill="#f2687f"/>
+  <rect x="114" y="54" width="14" height="66" rx="4" fill="#ee4a66"/>
+  <!-- counter -->
+  <rect x="40" y="154" width="236" height="14" rx="3" fill="#0b0c0e"/>
+</svg>

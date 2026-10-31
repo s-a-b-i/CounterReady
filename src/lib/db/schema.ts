@@ -1,7 +1,4 @@
-import { sql } from "drizzle-orm";
-import {
-  boolean, customType, index, integer, jsonb, pgTable, real, text, timestamp, uuid,
-} from "drizzle-orm/pg-core";
+import { customType, index, integer, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 const bytea = customType<{ data: Buffer; driverData: Buffer | string }>({
   dataType: () => "bytea",
@@ -9,67 +6,45 @@ const bytea = customType<{ data: Buffer; driverData: Buffer | string }>({
   fromDriver: (v) => (typeof v === "string" ? Buffer.from(v.replace(/^\\x/, ""), "hex") : v),
 });
 
-export const products = pgTable("products", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  slug: text("slug").notNull().unique(),
-  name: text("name").notNull(),
-  brand: text("brand").notNull(),
-  priceCents: integer("price_cents").notNull(),
-  currency: text("currency").notNull().default("USD"),
-  dropLengthCm: real("drop_length_cm").notNull(),
-  weightG: real("weight_g").notNull(),
-  fastening: text("fastening").notNull(),
-  material: text("material").notNull(),
-  hypoallergenicDeclared: boolean("hypoallergenic_declared").notNull().default(false),
-  returnPolicy: text("return_policy").notNull(),
-  returnWindowDays: integer("return_window_days").notNull(),
-  finalSale: boolean("final_sale").notNull().default(false),
-  styleTags: text("style_tags").array().notNull().default(sql`'{}'::text[]`),
-  imageUrl: text("image_url").notNull(),
-  referenceScaleCm: real("reference_scale_cm").notNull(),
-  description: text("description").notNull(),
-});
-
+/** Anonymous visitor (httpOnly cookie). Holds no personal data. */
 export const sessions = pgTable("sessions", {
   id: uuid("id").primaryKey().defaultRandom(),
-  preferences: jsonb("preferences").$type<Record<string, unknown>>().notNull().default({}),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+/** Generated previews. YouCam result URLs expire, so the compressed image is kept here. */
 export const resultImages = pgTable("result_images", {
   id: uuid("id").primaryKey().defaultRandom(),
   mime: text("mime").notNull(),
   bytes: bytea("bytes").notNull(),
 });
 
-export const tryons = pgTable(
-  "tryons",
+/** A selfie that was sent to YouCam. We keep only the provider file id and a hash, never the photo. */
+export const uploads = pgTable("uploads", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  sessionId: uuid("session_id").notNull().references(() => sessions.id, { onDelete: "cascade" }),
+  fileId: text("file_id").notNull(),
+  photoHash: text("photo_hash").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** One row per makeup preview request (one shade on one uploaded photo). */
+export const previews = pgTable(
+  "previews",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     sessionId: uuid("session_id").notNull().references(() => sessions.id, { onDelete: "cascade" }),
-    productId: uuid("product_id").notNull().references(() => products.id),
+    productId: text("product_id").notNull(),
+    inputHash: text("input_hash").notNull(),
     taskId: text("task_id"),
     status: text("status").notNull().default("queued"), // queued|processing|success|error
     resultImageId: uuid("result_image_id").references(() => resultImages.id, { onDelete: "set null" }),
     unitsSpent: integer("units_spent").notNull().default(0),
-    params: jsonb("params").$type<Record<string, unknown>>().notNull().default({}),
-    inputHash: text("input_hash").notNull(),
     error: text("error"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [index("tryons_hash_idx").on(t.inputHash), index("tryons_session_idx").on(t.sessionId)],
+  (t) => [index("previews_hash_idx").on(t.inputHash), index("previews_session_idx").on(t.sessionId)],
 );
-
-export const decisions = pgTable("decisions", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  sessionId: uuid("session_id").notNull().references(() => sessions.id, { onDelete: "cascade" }),
-  productId: uuid("product_id").notNull().references(() => products.id),
-  tryonId: uuid("tryon_id").references(() => tryons.id, { onDelete: "set null" }),
-  verdict: text("verdict").notNull(), // buy|maybe|skip
-  reason: text("reason").notNull().default(""),
-  shareSlug: text("share_slug").notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-}, (t) => [index("decisions_slug_idx").on(t.shareSlug)]);
 
 export const usageLedger = pgTable("usage_ledger", {
   id: uuid("id").primaryKey().defaultRandom(),

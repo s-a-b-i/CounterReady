@@ -4,7 +4,7 @@ import { db, tables } from "@/lib/db";
 
 type Ctx = { params: Promise<{ id: string }> };
 
-/** Streams a stored AI preview. Ids are unguessable UUIDs, so shared decision cards can embed them. */
+/** Streams a stored AI preview. Ids are unguessable UUIDs, so previews can be embedded safely. */
 export async function GET(_req: Request, { params }: Ctx) {
   const { id } = await params;
   if (!z.string().uuid().safeParse(id).success) return new Response("Not found", { status: 404 });

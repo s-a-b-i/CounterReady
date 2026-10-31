@@ -9,6 +9,6 @@ export default defineConfig({
     url: "http://localhost:3102/api/health",
     timeout: 240_000,
     reuseExistingServer: true,
-    env: { YOUCAM_MOCK: "1", MAX_TRYONS_PER_SESSION: "6" },
+    env: { YOUCAM_MOCK: "1", MAX_PREVIEWS_PER_SESSION: "8" },
   },
 });

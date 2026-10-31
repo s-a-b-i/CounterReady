@@ -1,105 +1,188 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import fixture from "../../fixtures/earring-success.json";
 import { evaluateBudget } from "@/lib/budget";
-import { fitToBrief, matchesBrief } from "@/lib/fit";
-import { tryonHash } from "@/lib/hash";
+import { CATALOGUE, explainNoMatches, formatPkr, getProduct, matchProducts } from "@/lib/catalogue";
+import type { Preferences } from "@/lib/consultation-types";
+import { photoHash, previewHash } from "@/lib/hash";
 import { sniffImageType } from "@/lib/images";
-import { humanError, parseTaskResponse } from "@/lib/youcam/adapter";
+import { buildReceipt, receiptText } from "@/lib/receipt";
+import { parseTaskResponse } from "@/lib/youcam/adapter";
+import { humanError } from "@/lib/youcam/errors";
+import { makeupEffect, tint } from "@/lib/youcam/effects";
 
-describe("response adapter", () => {
-  it("parses the real success fixture (results.url)", () => {
-    const p = parseTaskResponse(fixture);
-    expect(p.status).toBe("success");
-    expect(p.resultUrl).toMatch(/^https:\/\//);
+const prefs = (p: Partial<Preferences> = {}): Preferences => ({ category: "lipstick", budget: 2000, finish: "any", family: "any", ...p });
+
+describe("catalogue", () => {
+  it("has twenty sample products across three categories, all flagged as sample data", () => {
+    expect(CATALOGUE).toHaveLength(20);
+    expect(new Set(CATALOGUE.map((p) => p.category))).toEqual(new Set(["lipstick", "blush", "eyeshadow"]));
+    expect(CATALOGUE.every((p) => p.isSampleProduct && p.currency === "PKR")).toBe(true);
+    expect(new Set(CATALOGUE.map((p) => p.shadeCode)).size).toBe(20);
+    expect(new Set(CATALOGUE.map((p) => p.id)).size).toBe(20);
   });
-  it("tolerates results[].download_url", () => {
-    const p = parseTaskResponse({ data: { task_status: "success", results: [{ download_url: "https://x/y.png" }] } });
-    expect(p).toEqual({ status: "success", resultUrl: "https://x/y.png" });
+
+  it("only returns products from the chosen category", () => {
+    for (const category of ["lipstick", "blush", "eyeshadow"] as const) {
+      const m = matchProducts(prefs({ category, budget: 3000 }));
+      expect(m.length).toBeGreaterThan(3);
+      expect(m.every((p) => p.category === category)).toBe(true);
+    }
   });
-  it("treats running as processing and maps errors", () => {
-    expect(parseTaskResponse({ data: { task_status: "running", results: null } }).status).toBe("processing");
-    const e = parseTaskResponse({ data: { task_status: "error", error: "PHOTO_DETECTION_FAIL" } });
-    expect(e.status).toBe("error");
-    expect(humanError(e.errorCode)).toMatch(/ear/);
+
+  it("only uses finishes the preview API supports for each category", () => {
+    const allowed = { lipstick: ["matte", "satin", "gloss"], blush: ["matte", "satin", "shimmer"], eyeshadow: ["matte", "shimmer", "metallic"] };
+    for (const p of CATALOGUE) expect(allowed[p.category]).toContain(p.finish);
   });
-  it("flags success without a result image", () => {
-    expect(parseTaskResponse({ data: { task_status: "success", results: {} } }).errorCode).toBe("NO_RESULT");
+
+  it("never returns products over budget", () => {
+    const m = matchProducts(prefs({ budget: 1500 }));
+    expect(m.length).toBeGreaterThan(0);
+    expect(m.every((p) => p.price <= 1500)).toBe(true);
+  });
+
+  it("filters by finish and colour family", () => {
+    expect(matchProducts(prefs({ finish: "satin" })).every((p) => p.finish === "satin")).toBe(true);
+    expect(matchProducts(prefs({ family: "berry" })).every((p) => p.colourFamily === "berry")).toBe(true);
+  });
+
+  it("keeps out-of-stock products visible but flags them", () => {
+    const coral = matchProducts(prefs({ budget: 3000 })).find((p) => p.shadeCode === "CR-07");
+    expect(coral?.inStock).toBe(false);
+    expect(matchProducts(prefs({ category: "blush", budget: 3000 })).find((p) => p.shadeCode === "BL-05")?.inStock).toBe(false);
   });
 });
 
-describe("cache hash", () => {
-  const a = Buffer.from("selfie");
-  it("is stable and key-order independent", () => {
-    expect(tryonHash(a, "p1", 2, { x: 1, y: 2 })).toBe(tryonHash(a, "p1", 2, { y: 2, x: 1 }));
+describe("explainNoMatches", () => {
+  it("is empty when something matches", () => {
+    expect(explainNoMatches(prefs())).toEqual([]);
   });
-  it("changes with any input", () => {
-    const base = tryonHash(a, "p1", 2);
-    expect(tryonHash(Buffer.from("other"), "p1", 2)).not.toBe(base);
-    expect(tryonHash(a, "p2", 2)).not.toBe(base);
-    expect(tryonHash(a, "p1", 3)).not.toBe(base);
-    expect(tryonHash(a, "p1", 2, { left: true })).not.toBe(base);
+
+  it("blames the budget when it is the only blocker", () => {
+    const r = explainNoMatches(prefs({ budget: 500 }));
+    expect(r[0]).toMatch(/budget of PKR 500 is too low/);
+    expect(r[0]).toMatch(/PKR 1,200/);
+    expect(explainNoMatches(prefs({ category: "blush", budget: 500 }))[0]).toMatch(/cheapest blush costs PKR 1,100/);
+  });
+
+  it("blames the finish or colour family when relaxing it would help", () => {
+    const r = explainNoMatches(prefs({ budget: 1300, finish: "gloss", family: "brown" }));
+    expect(r.join(" ")).toMatch(/no gloss brown lipstick shade at any price/);
   });
 });
 
 describe("budget guard", () => {
-  const base = { totalUnitsUsed: 0, sessionTryons: 0, cost: 1, maxUnitsTotal: 850, maxTryonsPerSession: 6 };
-  it("allows within caps", () => expect(evaluateBudget(base).ok).toBe(true));
-  it("blocks at the per-session cap", () => {
-    const d = evaluateBudget({ ...base, sessionTryons: 6 });
-    expect(d.ok === false && d.reason).toBe("SESSION_CAP");
+  const base = { totalUnitsUsed: 0, sessionPreviews: 0, cost: 1, maxUnitsTotal: 850, maxPreviewsPerSession: 8 };
+  it("allows under both caps", () => expect(evaluateBudget(base).ok).toBe(true));
+  it("blocks at the session cap", () => {
+    const d = evaluateBudget({ ...base, sessionPreviews: 8 });
+    expect(d.ok).toBe(false);
+    if (!d.ok) expect(d.reason).toBe("SESSION_CAP");
   });
   it("blocks when the global cap would be exceeded", () => {
-    expect(evaluateBudget({ ...base, totalUnitsUsed: 850 }).ok).toBe(false);
-    expect(evaluateBudget({ ...base, totalUnitsUsed: 849 }).ok).toBe(true);
+    const d = evaluateBudget({ ...base, totalUnitsUsed: 850 });
+    expect(d.ok).toBe(false);
+    if (!d.ok) expect(d.reason).toBe("GLOBAL_CAP");
+  });
+  it("allows the very last unit", () => expect(evaluateBudget({ ...base, totalUnitsUsed: 849 }).ok).toBe(true));
+});
+
+describe("YouCam adapter", () => {
+  it("parses the real recorded success response", () => {
+    const raw = JSON.parse(readFileSync("fixtures/makeup-success.json", "utf8"));
+    const r = parseTaskResponse(raw);
+    expect(r.status).toBe("success");
+    expect(r.resultUrl).toMatch(/^https:\/\//);
+  });
+  it("reports running and error states", () => {
+    expect(parseTaskResponse({ status: 200, data: { task_status: "running" } }).status).toBe("processing");
+    const e = parseTaskResponse({ status: 200, data: { task_status: "error", error: "error_face_angle_invalid" } });
+    expect(e.status).toBe("error");
+    expect(e.errorCode).toBe("error_face_angle_invalid");
+  });
+  it("treats success without an image as an error", () => {
+    expect(parseTaskResponse({ data: { task_status: "success", results: {} } }).status).toBe("error");
+  });
+  it("maps provider codes to actionable messages", () => {
+    expect(humanError("error_face_angle_invalid")).toMatch(/straight at the camera/);
+    expect(humanError("something_new")).toMatch(/Something went wrong/);
   });
 });
 
-describe("fit to brief", () => {
-  const heavy = { priceCents: 3900, dropLengthCm: 8.5, fastening: "post", material: "Gold-tone alloy", returnWindowDays: 0, finalSale: true, styleTags: ["glam"] };
-  const stud = { priceCents: 4800, dropLengthCm: 0.8, fastening: "post", material: "925 sterling silver", returnWindowDays: 60, finalSale: false, styleTags: ["minimal"] };
-  it("counts met criteria out of applicable ones", () => {
-    const r = fitToBrief(stud, { budget: 60, maxDropCm: 3, fastening: "post", material: "silver" });
-    expect(r.met).toBe(5);
-    expect(r.applicable).toBe(5);
+describe("effect mapping", () => {
+  it("maps lipstick to lip_color with the catalogue finish as texture and previewHex as colour", () => {
+    const p = getProduct("cr-04")!;
+    const e = makeupEffect(p);
+    expect(e.category).toBe("lip_color");
+    expect((e.palettes as unknown[])[0]).toMatchObject({ color: p.previewHex, texture: "satin" });
   });
-  it("marks final sale and long drops as misses", () => {
-    const r = fitToBrief(heavy, { budget: 60, maxDropCm: 3 });
-    expect(r.criteria.find((c) => c.key === "returns")?.status).toBe("miss");
-    expect(r.criteria.find((c) => c.key === "length")?.status).toBe("miss");
+  it("adds the extra fields the API requires for gloss", () => {
+    expect((makeupEffect(getProduct("cr-02")!).palettes as unknown[])[0]).toMatchObject({ texture: "gloss", gloss: 60, transparencyIntensity: 30 });
   });
-  it("ignores unset criteria", () => {
-    expect(fitToBrief(stud, {}).applicable).toBe(1); // returns always applies
+  it("maps blush with a single-colour pattern and the fields each texture requires", () => {
+    const satin = makeupEffect(getProduct("bl-02")!);
+    expect(satin).toMatchObject({ category: "blush", pattern: { name: "1color1" } });
+    expect((satin.palettes as unknown[])[0]).toMatchObject({ texture: "satin", glowStrength: 40 });
+    const shimmer = (makeupEffect(getProduct("bl-03")!).palettes as Record<string, unknown>[])[0];
+    expect(shimmer).toMatchObject({ texture: "shimmer", glowStrength: 40, shimmerDensity: 50 });
+    expect(shimmer.shimmerColor).toMatch(/^#[0-9a-f]{6}$/);
   });
-  it("filters the catalogue", () => {
-    expect(matchesBrief(heavy, { maxDropCm: 3 })).toBe(false);
-    expect(matchesBrief(stud, { maxDropCm: 3, occasion: "minimal" })).toBe(true);
+  it("maps eyeshadow to eye_shadow and adds shimmer and metallic fields", () => {
+    expect(makeupEffect(getProduct("es-01")!)).toMatchObject({ category: "eye_shadow", pattern: { name: "1color1" } });
+    expect((makeupEffect(getProduct("es-02")!).palettes as unknown[])[0]).toMatchObject({ texture: "shimmer", shimmerIntensity: 50 });
+    expect((makeupEffect(getProduct("es-04")!).palettes as unknown[])[0]).toMatchObject({ texture: "metallic", shimmerIntensity: 50, metallicIntensity: 50 });
+  });
+  it("tint lightens a colour but keeps it valid hex", () => {
+    expect(tint("#000000", 0.5)).toBe("#808080");
+    expect(tint("#ffffff")).toBe("#ffffff");
   });
 });
 
-describe("magic byte sniffing", () => {
-  it("detects jpeg and png, rejects others", () => {
-    expect(sniffImageType(Buffer.from([0xff, 0xd8, 0xff, 0xe0]))).toBe("image/jpeg");
+describe("hashing", () => {
+  it("is stable per photo, product and effect, and changes when any of them change", () => {
+    const d = photoHash(Buffer.from("selfie"));
+    const a = previewHash(d, "cr-04", makeupEffect(getProduct("cr-04")!));
+    expect(previewHash(d, "cr-04", makeupEffect(getProduct("cr-04")!))).toBe(a);
+    expect(previewHash(d, "cr-03", makeupEffect(getProduct("cr-03")!))).not.toBe(a);
+    expect(previewHash(photoHash(Buffer.from("other")), "cr-04", makeupEffect(getProduct("cr-04")!))).not.toBe(a);
+  });
+});
+
+describe("comparison receipt", () => {
+  const selected = getProduct("cr-04")!;
+  const compared = ["cr-04", "cr-03", "cr-02"].map((id) => getProduct(id)!);
+
+  it("matches the example rows", () => {
+    const rows = buildReceipt({ prefs: prefs(), compared, selected, note: "Less bright than my second choice" });
+    expect(Object.fromEntries(rows)).toEqual({
+      "Product type": "Lipstick",
+      Budget: "PKR 2,000",
+      "Products compared": "Three",
+      "Selected product": "Sample Rosewood",
+      "Shade code": "CR-04",
+      Finish: "Satin",
+      "Listed price": "PKR 1,650",
+      "Customer note": "“Less bright than my second choice”",
+    });
+  });
+
+  it("omits the note row when blank", () => {
+    expect(buildReceipt({ prefs: prefs(), compared, selected, note: "  " }).some(([k]) => k === "Customer note")).toBe(false);
+  });
+
+  it("renders plain text with the sample-data reminder", () => {
+    const t = receiptText("Shop", buildReceipt({ prefs: prefs(), compared, selected }));
+    expect(t).toMatch(/Shade code: CR-04/);
+    expect(t).toMatch(/Sample catalogue data/);
+  });
+
+  it("formats PKR with thousands separators", () => expect(formatPkr(2300)).toBe("PKR 2,300"));
+});
+
+describe("magic-byte sniffing", () => {
+  it("detects JPEG and PNG and rejects others", () => {
+    expect(sniffImageType(Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 0]))).toBe("image/jpeg");
     expect(sniffImageType(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0]))).toBe("image/png");
     expect(sniffImageType(Buffer.from("GIF89a....."))).toBeNull();
-  });
-});
-
-import { rowWinners } from "@/lib/fit";
-
-describe("compare row winners", () => {
-  const mk = (id: string, o: object) => ({ id, priceCents: 5000, dropLengthCm: 2, weightG: 3, fastening: "post", material: "silver", returnWindowDays: 30, finalSale: false, styleTags: [], ...o });
-  const a = mk("a", { priceCents: 3000, weightG: 8, dropLengthCm: 7, finalSale: true });
-  const b = mk("b", { priceCents: 6000, weightG: 1, dropLengthCm: 2.5, returnWindowDays: 60 });
-  it("picks cheapest, lightest, longest returns", () => {
-    expect([...rowWinners("price", [a, b], {})]).toEqual(["a"]);
-    expect([...rowWinners("weight", [a, b], {})]).toEqual(["b"]);
-    expect([...rowWinners("returns", [a, b], {})]).toEqual(["b"]);
-  });
-  it("judges drop length against the brief limit", () => {
-    expect([...rowWinners("drop", [a, b], { maxDropCm: 3 })]).toEqual(["b"]);
-  });
-  it("only highlights fastening when the brief asks", () => {
-    expect(rowWinners("fastening", [a, b], {}).size).toBe(0);
-    expect(rowWinners("fastening", [a, b], { fastening: "post" }).size).toBe(2);
+    expect(sniffImageType(Buffer.from("<svg></svg>"))).toBeNull();
   });
 });

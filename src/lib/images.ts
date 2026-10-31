@@ -1,8 +1,10 @@
 import sharp from "sharp";
 
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+/** YouCam needs a face at least 100 px wide; a 400 px short side keeps a normal selfie comfortably above that. */
 export const MIN_SIDE_PX = 400;
-export const MAX_SIDE_PX = 4096;
+/** YouCam's documented limit is "long side < 1920"; we cap at 1080, which also keeps every preview the same size. */
+export const MAX_SIDE_PX = 1080;
 
 export type SniffedType = "image/jpeg" | "image/png";
 
@@ -19,7 +21,10 @@ export class ImageProblem extends Error {
   }
 }
 
-/** Validates and normalises a selfie: orientation applied, EXIF stripped, long side capped. */
+/**
+ * Validates and normalises a selfie: type by magic bytes, orientation applied, EXIF stripped,
+ * long side capped. These exact bytes are what YouCam receives, so every shade is applied to the same image.
+ */
 export async function prepareSelfie(bytes: Buffer): Promise<Buffer> {
   if (bytes.length > MAX_UPLOAD_BYTES) throw new ImageProblem("That photo is over 10 MB. Try a smaller one.", "TOO_LARGE");
   if (!sniffImageType(bytes)) throw new ImageProblem("Only JPG or PNG photos are supported.", "BAD_TYPE");
@@ -33,17 +38,17 @@ export async function prepareSelfie(bytes: Buffer): Promise<Buffer> {
   const w = oriented ? meta.height ?? 0 : meta.width ?? 0;
   const h = oriented ? meta.width ?? 0 : meta.height ?? 0;
   if (Math.min(w, h) < MIN_SIDE_PX) throw new ImageProblem(`That photo is too small. Use one at least ${MIN_SIDE_PX}px on its short side.`, "TOO_SMALL");
-  return sharp(bytes).rotate().resize({ width: 2048, height: 2048, fit: "inside", withoutEnlargement: true }).jpeg({ quality: 90 }).toBuffer();
-}
-
-/** Rasterises catalogue art (SVG or any format) into a PNG reference image for the provider. */
-export async function prepareReference(bytes: Buffer): Promise<Buffer> {
-  return sharp(bytes, { density: 144 }).resize({ width: 1024, height: 1024, fit: "inside", withoutEnlargement: false }).png().toBuffer();
+  return sharp(bytes)
+    .rotate()
+    .flatten({ background: "#ffffff" })
+    .resize({ width: MAX_SIDE_PX, height: MAX_SIDE_PX, fit: "inside", withoutEnlargement: true })
+    .jpeg({ quality: 92 })
+    .toBuffer();
 }
 
 /** Compresses a provider result for storage in Postgres (target well under 1 MB). */
 export async function compressResult(bytes: Buffer): Promise<{ mime: string; bytes: Buffer }> {
-  for (const [width, quality] of [[1400, 82], [1200, 74], [1000, 66]] as const) {
+  for (const [width, quality] of [[1080, 88], [1080, 80], [900, 72]] as const) {
     const out = await sharp(bytes).resize({ width, withoutEnlargement: true }).jpeg({ quality, mozjpeg: true }).toBuffer();
     if (out.length <= 1_000_000) return { mime: "image/jpeg", bytes: out };
   }

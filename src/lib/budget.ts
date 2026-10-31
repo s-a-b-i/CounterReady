@@ -1,9 +1,9 @@
 export interface BudgetInput {
   totalUnitsUsed: number;
-  sessionTryons: number;
+  sessionPreviews: number;
   cost: number;
   maxUnitsTotal: number;
-  maxTryonsPerSession: number;
+  maxPreviewsPerSession: number;
 }
 
 export type BudgetDecision =
@@ -12,18 +12,18 @@ export type BudgetDecision =
 
 /** Pure decision function; the DB transaction in `reserveUnits` feeds it real numbers. */
 export function evaluateBudget(i: BudgetInput): BudgetDecision {
-  if (i.sessionTryons >= i.maxTryonsPerSession) {
+  if (i.sessionPreviews >= i.maxPreviewsPerSession) {
     return {
       ok: false,
       reason: "SESSION_CAP",
-      message: `You've used all ${i.maxTryonsPerSession} demo try-ons for this session. You can still browse, compare and decide.`,
+      message: `You've used all ${i.maxPreviewsPerSession} demo previews for this session. You can still compare what you have and save your purchase card.`,
     };
   }
   if (i.totalUnitsUsed + i.cost > i.maxUnitsTotal) {
     return {
       ok: false,
       reason: "GLOBAL_CAP",
-      message: "The demo's try-on credit limit has been reached. Browse the catalogue and see pre-generated examples instead.",
+      message: "The demo's preview credit limit has been reached. The sample photo still works, because its results are saved.",
     };
   }
   return { ok: true };

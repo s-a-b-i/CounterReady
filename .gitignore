@@ -35,6 +35,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -45,3 +46,7 @@ next-env.d.ts
 fixtures/inputs/
 test-results/
 playwright-report/
+
+# source artwork kept locally (the site uses the optimised files in public/)
+/Elegant Profile Portrait Cutout.png
+/Charcoal CR Beauty Bar Monogram.png

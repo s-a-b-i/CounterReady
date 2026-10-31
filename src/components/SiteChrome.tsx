@@ -1,20 +1,25 @@
-"use client";
-
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Wordmark } from "@/components/Wordmark";
+import { ArrowRight } from "lucide-react";
 
-/** The landing page ships its own black-and-white chrome, so the global one steps aside on "/". */
-export function SiteHeader() {
-  if (usePathname() === "/") return null;
+export function Wordmark({ className = "" }: { className?: string }) {
   return (
-    <header className="no-print sticky top-0 z-40 backdrop-blur bg-bg/80 border-b border-hair">
-      <div className="mx-auto max-w-7xl px-4 sm:px-8 h-16 flex items-center justify-between">
-        <Link href="/" aria-label="SmallPrint home"><Wordmark /></Link>
-        <nav className="flex items-center gap-5 text-sm" aria-label="Primary">
-          <Link href="/#how" className="hidden sm:inline text-soft hover:text-ink">How it works</Link>
-          <Link href="/privacy" className="hidden sm:inline text-soft hover:text-ink">Privacy</Link>
-          <Link href="/studio" className="btn !min-h-10 !px-5">Start</Link>
+    <span className={`display inline-flex items-center gap-2 text-[1.15rem] ${className}`}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/brand/logo-mark.svg" alt="" aria-hidden className="h-7 w-auto" />
+      CounterReady
+    </span>
+  );
+}
+
+export function SiteHeader() {
+  return (
+    <header className="sticky top-0 z-40 border-b border-hair bg-white/90 backdrop-blur">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-8">
+        <Link href="/" aria-label="CounterReady home"><Wordmark /></Link>
+        <nav aria-label="Primary" className="flex items-center gap-1 sm:gap-3">
+          <Link href="/#how" className="btn btn-ghost !hidden !min-h-10 sm:!inline-flex">How it works</Link>
+          <Link href="/#real" className="btn btn-ghost !hidden !min-h-10 sm:!inline-flex">What&apos;s real</Link>
+          <Link href="/consult" className="btn !min-h-10 !px-5 whitespace-nowrap"><span className="sm:hidden">Start</span><span className="hidden sm:inline">Start a consultation</span> <ArrowRight size={15} aria-hidden /></Link>
         </nav>
       </div>
     </header>
@@ -22,22 +27,14 @@ export function SiteHeader() {
 }
 
 export function SiteFooter() {
-  if (usePathname() === "/") return null;
   return (
-    <footer className="no-print border-t border-hair mt-24">
-      <div className="mx-auto max-w-7xl px-4 sm:px-8 py-10 grid gap-6 sm:grid-cols-2 text-sm text-soft">
-        <div>
-          <Wordmark />
-          <p className="mt-3 max-w-sm">
-            Previews are AI-generated approximations. Weight, material, hypoallergenic status and return terms come from
-            the seller&apos;s catalogue, never from the AI.
-          </p>
-        </div>
-        <div className="sm:text-right space-y-1">
-          <p>Try-on by the YouCam Earring VTO API.</p>
-          <p><Link href="/privacy" className="underline underline-offset-4">Privacy &amp; delete my data</Link></p>
-          <p>Built for the YouCam API Skin AI &amp; eCommerce VTO Hackathon.</p>
-        </div>
+    <footer className="border-t border-hair">
+      <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-8 text-sm text-soft sm:flex-row sm:items-center sm:justify-between sm:px-8">
+        <p>Built for the YouCam API Skin AI &amp; eCommerce VTO Hackathon. Previews generated with the YouCam AI Makeup API.</p>
+        <nav aria-label="Footer" className="flex gap-5">
+          <Link href="/privacy" className="underline-offset-4 hover:underline">Privacy</Link>
+          <Link href="/consult" className="underline-offset-4 hover:underline">Start a consultation</Link>
+        </nav>
       </div>
     </footer>
   );

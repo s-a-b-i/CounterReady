@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img" aria-label="Sample Peach Bloom sample illustration">
+  <rect width="400" height="400" fill="#f4f5f6"/>
+  <ellipse cx="200" cy="330" rx="130" ry="14" fill="#000" opacity=".08"/>
+  <rect x="80" y="130" width="240" height="190" rx="28" fill="#1d1e21"/>
+  <rect x="80" y="130" width="240" height="14" rx="7" fill="#c9a24b"/>
+  <rect x="104" y="160" width="192" height="136" rx="20" fill="#2b2c30"/>
+  <circle cx="200" cy="228" r="58" fill="#f08f78"/>
+  
+  <text x="200" y="392" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#8a9099">SAMPLE · BL-01</text>
+</svg>
