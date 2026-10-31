@@ -6,12 +6,12 @@ import Link from "next/link";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
-function Line({ children, delay }: { children: string; delay: number }) {
+function Line({ children, delay }: { children: React.ReactNode; delay: number }) {
   const reduce = useReducedMotion();
   return (
     <span className="block overflow-hidden pb-[0.04em]">
       <motion.span
-        className="block"
+        className="flex flex-wrap justify-center gap-x-[0.28em] sm:flex-nowrap sm:justify-between"
         initial={reduce ? false : { y: "105%" }}
         animate={{ y: 0 }}
         transition={{ duration: 1, delay, ease }}
@@ -48,14 +48,14 @@ export function Hero() {
 
       {/* poster */}
       <div className="relative flex-1">
-        <h1 aria-label="Looks right? But should I buy it?" className="poster pointer-events-none absolute inset-x-0 top-[8%] z-0 flex flex-col items-center px-[3vw] text-[clamp(3rem,20vw,9rem)] sm:top-[31%] sm:flex-row sm:items-start sm:justify-between sm:text-[6.6vw]">
-          <Line delay={0.1}>Looks</Line>
-          <Line delay={0.22}>Right?</Line>
+        <h1 aria-label="Looks right. But should I buy it?" className="poster pointer-events-none absolute inset-x-0 top-[6%] z-0 whitespace-normal px-[3vw] text-[clamp(3rem,16vw,8rem)] sm:top-[30%] sm:whitespace-nowrap sm:text-[6.3vw]">
+          <Line delay={0.1}><span>Looks</span><span>Right.</span></Line>
+          <Line delay={0.22}><span>Should</span><span>I buy?</span></Line>
         </h1>
 
         {/* portrait: greyscale photo multiplied onto white so its sky disappears */}
         <motion.div
-          className="pointer-events-none absolute -bottom-[8%] left-1/2 z-10 aspect-[2/3] h-[132%] -translate-x-1/2"
+          className="pointer-events-none absolute bottom-0 left-1/2 z-10 aspect-[2/3] h-[74%] sm:-bottom-[8%] sm:h-[132%] -translate-x-1/2"
           initial={reduce ? false : { y: 60, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 1.1, delay: 0.3, ease }}
@@ -77,9 +77,9 @@ export function Hero() {
         {/* second layer of type, inverted where it crosses the photo */}
         <p
           aria-hidden="true"
-          className="poster pointer-events-none absolute left-[calc(50%+24vw)] top-[44%] z-20 hidden whitespace-nowrap text-[clamp(1rem,2vw,2.2rem)] text-white mix-blend-difference [writing-mode:vertical-rl] sm:block"
+          className="poster pointer-events-none absolute left-[52.5%] top-[59%] z-20 hidden whitespace-nowrap text-[clamp(1rem,2.5vw,2.8rem)] text-white mix-blend-difference [writing-mode:vertical-rl] sm:block"
         >
-          But should I buy it?
+          SmallPrint
         </p>
 
         {/* captions */}
@@ -95,7 +95,7 @@ export function Hero() {
           </p>
           <Link href="/studio" className="pill pill-solid">Try my first earring <ArrowRight size={13} aria-hidden /></Link>
         </motion.div>
-        <motion.p {...fade(1.2)} className="micro text-white mix-blend-difference absolute bottom-6 right-5 z-20 text-right sm:bottom-10 sm:right-10">
+        <motion.p {...fade(1.2)} className="micro text-white mix-blend-difference absolute hidden sm:block bottom-6 right-5 z-20 text-right sm:bottom-10 sm:right-10">
           A more<br />confident<br />checkout
         </motion.p>
       </div>
