@@ -27,7 +27,7 @@ async function main() {
     console.error("usage: tsx scripts/make-cutout-ml.ts <input> [out.png]");
     process.exit(1);
   }
-  const blob = await removeBackground(new Blob([new Uint8Array(readFileSync(input))], { type: /.png$/i.test(input) ? "image/png" : /.webp$/i.test(input) ? "image/webp" : "image/jpeg" }), {
+  const blob = await removeBackground(new Blob([new Uint8Array(readFileSync(input))], { type: /[.]png$/i.test(input) ? "image/png" : /[.]webp$/i.test(input) ? "image/webp" : "image/jpeg" }), {
     model: "medium",
     output: { format: "image/png" },
   });
