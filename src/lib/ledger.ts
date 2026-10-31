@@ -51,7 +51,7 @@ export async function reserveUnits(args: {
         unitsSpent: UNITS_PER_TRYON,
       })
       .returning({ id: tables.tryons.id });
-    await tx.insert(tables.usageLedger).values({ sessionId: args.sessionId, units: UNITS_PER_TRYON, kind: "earring_tryon" });
+    await tx.insert(tables.usageLedger).values({ sessionId: args.sessionId, units: e.YOUCAM_MOCK === "1" ? 0 : UNITS_PER_TRYON, kind: e.YOUCAM_MOCK === "1" ? "mock_tryon" : "earring_tryon" });
     return { decision, tryonId: row.id };
   });
 }
@@ -62,7 +62,7 @@ export async function refundUnits(tryonId: string, sessionId: string, error: str
     const [row] = await tx.select().from(tables.tryons).where(eq(tables.tryons.id, tryonId));
     if (!row || row.unitsSpent === 0) return; // idempotent: never refund twice
     await tx.update(tables.tryons).set({ status: "error", unitsSpent: 0, error }).where(eq(tables.tryons.id, tryonId));
-    await tx.insert(tables.usageLedger).values({ sessionId, units: -row.unitsSpent, kind: "refund" });
+    await tx.insert(tables.usageLedger).values({ sessionId, units: env().YOUCAM_MOCK === "1" ? 0 : -row.unitsSpent, kind: "refund" });
   });
 }
 

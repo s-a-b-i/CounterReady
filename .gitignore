@@ -43,3 +43,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 fixtures/inputs/
+test-results/
+playwright-report/
