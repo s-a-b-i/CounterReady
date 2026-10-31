@@ -81,16 +81,6 @@ export function Hero() {
             src="/examples/portrait-cutout.webp"
             alt="Side-profile portrait of a woman with a small gold hoop earring (AI-generated image)"
             className="h-full w-full object-contain object-bottom"
-            style={{
-              WebkitMaskRepeat: "no-repeat",
-              maskRepeat: "no-repeat",
-              WebkitMaskSize: "100% 100%",
-              maskSize: "100% 100%",
-              WebkitMaskImage: "linear-gradient(to right, #000 0, #000 86%, transparent 97%), linear-gradient(to bottom, #000 80%, transparent 100%)",
-              maskImage: "linear-gradient(to right, #000 0, #000 86%, transparent 97%), linear-gradient(to bottom, #000 80%, transparent 100%)",
-              WebkitMaskComposite: "source-in",
-              maskComposite: "intersect",
-            }}
           />
         </motion.div>
 
