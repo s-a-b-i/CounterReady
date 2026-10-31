@@ -44,7 +44,12 @@ async function main() {
 
   await db.delete(tables.products);
   await db.insert(tables.products).values(
-    products.map(({ shape: _shape, color: _color, ...rest }) => ({ ...rest, currency: "USD", imageUrl: `/products/${rest.slug}.svg` })),
+    products.map((p) => ({
+      slug: p.slug, name: p.name, brand: p.brand, priceCents: p.priceCents, dropLengthCm: p.dropLengthCm, weightG: p.weightG,
+      fastening: p.fastening, material: p.material, hypoallergenicDeclared: p.hypoallergenicDeclared, returnPolicy: p.returnPolicy,
+      returnWindowDays: p.returnWindowDays, finalSale: p.finalSale, styleTags: p.styleTags, referenceScaleCm: p.referenceScaleCm,
+      description: p.description, currency: "USD", imageUrl: `/products/${p.slug}.svg`,
+    })),
   );
   console.log(`seeded ${products.length} products`);
   process.exit(0);

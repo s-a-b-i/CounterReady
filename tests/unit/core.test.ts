@@ -83,3 +83,23 @@ describe("magic byte sniffing", () => {
     expect(sniffImageType(Buffer.from("GIF89a....."))).toBeNull();
   });
 });
+
+import { rowWinners } from "@/lib/fit";
+
+describe("compare row winners", () => {
+  const mk = (id: string, o: object) => ({ id, priceCents: 5000, dropLengthCm: 2, weightG: 3, fastening: "post", material: "silver", returnWindowDays: 30, finalSale: false, styleTags: [], ...o });
+  const a = mk("a", { priceCents: 3000, weightG: 8, dropLengthCm: 7, finalSale: true });
+  const b = mk("b", { priceCents: 6000, weightG: 1, dropLengthCm: 2.5, returnWindowDays: 60 });
+  it("picks cheapest, lightest, longest returns", () => {
+    expect([...rowWinners("price", [a, b], {})]).toEqual(["a"]);
+    expect([...rowWinners("weight", [a, b], {})]).toEqual(["b"]);
+    expect([...rowWinners("returns", [a, b], {})]).toEqual(["b"]);
+  });
+  it("judges drop length against the brief limit", () => {
+    expect([...rowWinners("drop", [a, b], { maxDropCm: 3 })]).toEqual(["b"]);
+  });
+  it("only highlights fastening when the brief asks", () => {
+    expect(rowWinners("fastening", [a, b], {}).size).toBe(0);
+    expect(rowWinners("fastening", [a, b], { fastening: "post" }).size).toBe(2);
+  });
+});

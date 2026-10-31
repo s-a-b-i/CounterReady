@@ -90,3 +90,33 @@ export function weightFeel(grams: number): string {
   if (grams <= 8) return "Noticeable";
   return "Heavy: you'll feel it";
 }
+
+export type CompareRow = "price" | "drop" | "weight" | "returns" | "fastening" | "material";
+
+interface WinnerProduct extends FitProduct {
+  id: string;
+  weightG: number;
+}
+
+/** Which products "win" a row of the compare table, judged against the shopper's own brief. */
+export function rowWinners(row: CompareRow, products: WinnerProduct[], b: Brief): Set<string> {
+  if (products.length < 2) return new Set();
+  const best = (score: (p: WinnerProduct) => number): Set<string> => {
+    const top = Math.max(...products.map(score));
+    return new Set(products.filter((p) => score(p) === top).map((p) => p.id));
+  };
+  switch (row) {
+    case "price": return best((p) => -p.priceCents);
+    case "weight": return best((p) => -p.weightG);
+    case "returns": return best((p) => (p.finalSale ? -1 : p.returnWindowDays));
+    case "drop":
+      if (b.maxDropCm === undefined) return best((p) => -p.dropLengthCm);
+      return best((p) => (p.dropLengthCm <= b.maxDropCm! ? -Math.abs(b.maxDropCm! - p.dropLengthCm) : -1000 - p.dropLengthCm));
+    case "fastening":
+      if (!b.fastening || b.fastening === "any") return new Set();
+      return new Set(products.filter((p) => p.fastening === b.fastening).map((p) => p.id));
+    case "material":
+      if (!b.material || b.material === "any") return new Set();
+      return new Set(products.filter((p) => p.material.toLowerCase().includes(b.material!.toLowerCase())).map((p) => p.id));
+  }
+}
