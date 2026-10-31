@@ -84,19 +84,19 @@ export function Hero() {
 
         {/* cut-out portrait sits in front of the type */}
         <motion.div
-          className="pointer-events-none absolute bottom-0 left-1/2 z-10 aspect-[2/3] h-[74%] -translate-x-1/2 sm:-bottom-[8%] sm:h-[132%]"
+          className="pointer-events-none absolute bottom-0 left-1/2 z-10 aspect-[2/3] h-[74%] -translate-x-1/2 sm:-bottom-[8%] sm:h-[110%]"
           initial={reduce ? false : { y: 60, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 1.1, delay: 0.3, ease }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/examples/portrait-cutout.png"
+            src="/examples/portrait-cutout.webp"
             alt="Side-profile portrait wearing a small gold hoop earring placed by the YouCam Earring API"
             className="h-full w-full object-contain object-bottom"
             style={{
-              WebkitMaskImage: "linear-gradient(to right, transparent 0, #000 14%, #000 86%, transparent 100%), linear-gradient(to bottom, #000 78%, transparent 100%)",
-              maskImage: "linear-gradient(to right, transparent 0, #000 14%, #000 86%, transparent 100%), linear-gradient(to bottom, #000 78%, transparent 100%)",
+              WebkitMaskImage: "linear-gradient(to right, #000 0, #000 86%, transparent 97%), linear-gradient(to bottom, #000 80%, transparent 100%)",
+              maskImage: "linear-gradient(to right, #000 0, #000 86%, transparent 97%), linear-gradient(to bottom, #000 80%, transparent 100%)",
               WebkitMaskComposite: "source-in",
               maskComposite: "intersect",
             }}

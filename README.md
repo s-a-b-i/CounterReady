@@ -128,6 +128,6 @@ One Playwright test walks brief → pieces → photo → try-on → compare → 
 
 ## Credits & licence
 
-Sample portrait for the example and tests: Pexels photo 8092473 (Pexels licence). Placeholder earring art is generated SVG; see `TODO-ASSETS.md`.
+Hero/example portrait: an AI-generated image supplied by the author (no real person). The fixtures in `fixtures/inputs/` are gitignored. Placeholder earring art is generated SVG; see `TODO-ASSETS.md`.
 Fonts: Fraunces, Inter, JetBrains Mono (SIL OFL via `next/font`). Brands in the catalogue are fictional.
 Code released under the [MIT licence](LICENSE).

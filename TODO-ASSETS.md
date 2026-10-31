@@ -24,5 +24,4 @@ Keep each product's `referenceScaleCm` equal to the real declared size, since it
 
 Also worth replacing before submission:
 
-- `public/examples/pre-generated-*.jpg`: currently a Pexels portrait run through the real YouCam API. Replace with your own
-  before/after if you prefer a different face (or keep and credit).
+- `public/examples/*`: the hero cut-out (`portrait-cutout.webp`) and the before/after pair come from an AI-generated portrait run through the real YouCam Earring API. To use a different portrait: `npx tsx scripts/make-cutout-ml.ts <image>` for a transparent cut-out, then `npm run smoke -- <selfie> <earring> 1.8` for a try-on result.
