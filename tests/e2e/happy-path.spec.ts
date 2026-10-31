@@ -5,10 +5,10 @@ const selfie = path.join(__dirname, "../../public/examples/pre-generated-before.
 
 test("brief → pieces → photo → try-on → compare → card (mock mode)", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Looks right");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveAccessibleName(/Looks right/i);
   await page.screenshot({ path: "test-results/01-landing.png", fullPage: false });
 
-  await page.getByRole("link", { name: "Try my first earring" }).click();
+  await page.getByRole("link", { name: /Try my first earring/i }).first().click();
   await expect(page.getByRole("heading", { name: /right for me/ })).toBeVisible();
   await page.screenshot({ path: "test-results/02-brief.png" });
   await page.getByRole("button", { name: "See the pieces" }).click();

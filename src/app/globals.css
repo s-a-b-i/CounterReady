@@ -199,3 +199,54 @@ body::before {
   body { background: #fff; color: #000; }
   .print-card { box-shadow: none !important; border: 1px solid #999 !important; break-inside: avoid; }
 }
+
+/* Landing: strict black & white, poster typography */
+.mono {
+  --bg: #fff;
+  --bg-raised: #fff;
+  --bg-sunk: #f1f1f1;
+  --ink: #000;
+  --ink-soft: #4d4d4d;
+  --hairline: #cfcfcf;
+  --gold: #000;
+  --gold-text: #000;
+  background: #fff;
+  color: #000;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .mono { color-scheme: light; }
+}
+.poster {
+  font-family: var(--font-archivo), "Arial Black", sans-serif;
+  font-stretch: 125%;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.045em;
+  line-height: 0.8;
+}
+.micro {
+  font-size: 0.625rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  line-height: 1.9;
+  font-weight: 500;
+}
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 44px;
+  padding: 0 1.4rem;
+  border: 1px solid #000;
+  border-radius: 999px;
+  font-size: 0.625rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-weight: 600;
+  background: transparent;
+  color: #000;
+  transition: background 0.2s, color 0.2s;
+}
+.pill:hover { background: #000; color: #fff; }
+.pill-solid { background: #000; color: #fff; }
+.pill-solid:hover { background: #fff; color: #000; }
